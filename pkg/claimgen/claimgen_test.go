@@ -1,11 +1,12 @@
 package claimgen
 
 import (
+	"testing"
+
 	"github.com/Layr-Labs/eigenlayer-rewards-proofs/internal/tests"
 	"github.com/Layr-Labs/eigenlayer-rewards-proofs/pkg/distribution"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestNewClaimgen(t *testing.T) {
@@ -14,7 +15,7 @@ func TestNewClaimgen(t *testing.T) {
 	cg := NewClaimgen(distro)
 
 	assert.NotNil(t, cg)
-	assert.NotNil(t, cg.distribution)
+	assert.NotNil(t, cg.Distribution)
 }
 
 func TestGetProofForEarner(t *testing.T) {
