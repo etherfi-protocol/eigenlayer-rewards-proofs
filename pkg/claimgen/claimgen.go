@@ -170,8 +170,8 @@ func (c *Claimgen) GenerateClaimProofsForEarners(
 		return nil, nil, err
 	}
 
-	claims := make([]*rewardsCoordinator.IRewardsCoordinatorRewardsMerkleClaim, len(earners))
-	for idx, earner := range earners {
+	claims := make([]*rewardsCoordinator.IRewardsCoordinatorRewardsMerkleClaim, 0, len(earners))
+	for _, earner := range earners {
 		merkleClaim, err := GetProofForEarner(
 			c.Distribution,
 			rootIndex,
@@ -181,9 +181,14 @@ func (c *Claimgen) GenerateClaimProofsForEarners(
 			tokens,
 		)
 		if err != nil {
+			// if an address does not have a specific token, just skip it instead of failing the whole batch
+			if errors.Is(err, ErrTokenIndexNotFound) {
+				fmt.Printf("earner %s, has not earned specified token, skipping...\n")
+				continue
+			}
 			return nil, nil, err
 		}
-		claims[idx] = merkleClaim
+		claims = append(claims, merkleClaim)
 	}
 
 	return accountTree, claims, err
