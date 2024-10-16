@@ -182,7 +182,7 @@ func (c *Claimgen) GenerateClaimProofsForEarners(
 		)
 		if err != nil {
 			// if an address does not have a specific token, just skip it instead of failing the whole batch
-			if errors.Is(err, ErrTokenIndexNotFound) {
+			if errors.Is(err, ErrTokenIndexNotFound) || errors.Is(err, ErrEarnerIndexNotFound) {
 				fmt.Printf("earner %s, has not earned specified token, skipping...\n", earner)
 				continue
 			}
