@@ -146,12 +146,12 @@ func convertTokenLeavesToSolidityLeaves(tokenLeaves []rewardsCoordinator.IReward
 }
 
 type Claimgen struct {
-	distribution *distribution.Distribution
+	Distribution *distribution.Distribution
 }
 
 func NewClaimgen(distro *distribution.Distribution) *Claimgen {
 	return &Claimgen{
-		distribution: distro,
+		Distribution: distro,
 	}
 }
 
@@ -165,7 +165,7 @@ func (c *Claimgen) GenerateClaimProofsForEarners(
 	error,
 ) {
 
-	accountTree, tokenTrees, err := c.distribution.Merklize()
+	accountTree, tokenTrees, err := c.Distribution.Merklize()
 	if err != nil {
 		return nil, nil, err
 	}
@@ -173,7 +173,7 @@ func (c *Claimgen) GenerateClaimProofsForEarners(
 	claims := make([]*rewardsCoordinator.IRewardsCoordinatorRewardsMerkleClaim, len(earners))
 	for idx, earner := range earners {
 		merkleClaim, err := GetProofForEarner(
-			c.distribution,
+			c.Distribution,
 			rootIndex,
 			accountTree,
 			tokenTrees,
@@ -198,13 +198,13 @@ func (c *Claimgen) GenerateClaimProofForEarner(
 	*rewardsCoordinator.IRewardsCoordinatorRewardsMerkleClaim,
 	error,
 ) {
-	accountTree, tokenTrees, err := c.distribution.Merklize()
+	accountTree, tokenTrees, err := c.Distribution.Merklize()
 	if err != nil {
 		return nil, nil, err
 	}
 
 	merkleClaim, err := GetProofForEarner(
-		c.distribution,
+		c.Distribution,
 		rootIndex,
 		accountTree,
 		tokenTrees,
