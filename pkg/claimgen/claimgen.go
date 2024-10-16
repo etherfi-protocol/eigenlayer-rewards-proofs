@@ -3,6 +3,7 @@ package claimgen
 import (
 	"errors"
 	"fmt"
+
 	rewardsCoordinator "github.com/Layr-Labs/eigenlayer-contracts/pkg/bindings/IRewardsCoordinator"
 
 	"github.com/Layr-Labs/eigenlayer-rewards-proofs/pkg/distribution"
@@ -152,6 +153,40 @@ func NewClaimgen(distro *distribution.Distribution) *Claimgen {
 	return &Claimgen{
 		distribution: distro,
 	}
+}
+
+func (c *Claimgen) GenerateClaimProofsForEarners(
+	earners []gethcommon.Address,
+	tokens []gethcommon.Address,
+	rootIndex uint32,
+) (
+	*merkletree.MerkleTree,
+	[]*rewardsCoordinator.IRewardsCoordinatorRewardsMerkleClaim,
+	error,
+) {
+
+	accountTree, tokenTrees, err := c.distribution.Merklize()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	claims := make([]*rewardsCoordinator.IRewardsCoordinatorRewardsMerkleClaim, len(earners))
+	for idx, earner := range earners {
+		merkleClaim, err := GetProofForEarner(
+			c.distribution,
+			rootIndex,
+			accountTree,
+			tokenTrees,
+			earner,
+			tokens,
+		)
+		if err != nil {
+			return nil, nil, err
+		}
+		claims[idx] = merkleClaim
+	}
+
+	return accountTree, claims, err
 }
 
 func (c *Claimgen) GenerateClaimProofForEarner(
