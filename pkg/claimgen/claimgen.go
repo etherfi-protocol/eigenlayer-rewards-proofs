@@ -155,6 +155,8 @@ func NewClaimgen(distro *distribution.Distribution) *Claimgen {
 	}
 }
 
+// Earners that are skipped due to not being in the tree or not having the required tokens
+// are returned as nil entries in the results and it is up to the caller to filter
 func (c *Claimgen) GenerateClaimProofsForEarners(
 	earners []gethcommon.Address,
 	tokens []gethcommon.Address,
@@ -170,8 +172,8 @@ func (c *Claimgen) GenerateClaimProofsForEarners(
 		return nil, nil, err
 	}
 
-	claims := make([]*rewardsCoordinator.IRewardsCoordinatorRewardsMerkleClaim, 0, len(earners))
-	for _, earner := range earners {
+	claims := make([]*rewardsCoordinator.IRewardsCoordinatorRewardsMerkleClaim, len(earners))
+	for idx, earner := range earners {
 		merkleClaim, err := GetProofForEarner(
 			c.Distribution,
 			rootIndex,
@@ -188,7 +190,7 @@ func (c *Claimgen) GenerateClaimProofsForEarners(
 			}
 			return nil, nil, err
 		}
-		claims = append(claims, merkleClaim)
+		claims[idx] = merkleClaim
 	}
 
 	return accountTree, claims, err
