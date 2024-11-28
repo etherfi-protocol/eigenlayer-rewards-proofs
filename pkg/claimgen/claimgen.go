@@ -3,6 +3,7 @@ package claimgen
 import (
 	"errors"
 	"fmt"
+
 	rewardsCoordinator "github.com/Layr-Labs/eigenlayer-contracts/pkg/bindings/IRewardsCoordinator"
 
 	"github.com/Layr-Labs/eigenlayer-rewards-proofs/pkg/distribution"
@@ -145,13 +146,54 @@ func convertTokenLeavesToSolidityLeaves(tokenLeaves []rewardsCoordinator.IReward
 }
 
 type Claimgen struct {
-	distribution *distribution.Distribution
+	Distribution *distribution.Distribution
 }
 
 func NewClaimgen(distro *distribution.Distribution) *Claimgen {
 	return &Claimgen{
-		distribution: distro,
+		Distribution: distro,
 	}
+}
+
+// Earners that are skipped due to not being in the tree or not having the required tokens
+// are returned as nil entries in the results and it is up to the caller to filter
+func (c *Claimgen) GenerateClaimProofsForEarners(
+	earners []gethcommon.Address,
+	tokens []gethcommon.Address,
+	rootIndex uint32,
+) (
+	*merkletree.MerkleTree,
+	[]*rewardsCoordinator.IRewardsCoordinatorRewardsMerkleClaim,
+	error,
+) {
+
+	accountTree, tokenTrees, err := c.Distribution.Merklize()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	claims := make([]*rewardsCoordinator.IRewardsCoordinatorRewardsMerkleClaim, len(earners))
+	for idx, earner := range earners {
+		merkleClaim, err := GetProofForEarner(
+			c.Distribution,
+			rootIndex,
+			accountTree,
+			tokenTrees,
+			earner,
+			tokens,
+		)
+		if err != nil {
+			// if an address does not have a specific token, just skip it instead of failing the whole batch
+			if errors.Is(err, ErrTokenIndexNotFound) || errors.Is(err, ErrEarnerIndexNotFound) {
+				fmt.Printf("earner %s, has not earned specified token, skipping...\n", earner)
+				continue
+			}
+			return nil, nil, err
+		}
+		claims[idx] = merkleClaim
+	}
+
+	return accountTree, claims, err
 }
 
 func (c *Claimgen) GenerateClaimProofForEarner(
@@ -163,13 +205,13 @@ func (c *Claimgen) GenerateClaimProofForEarner(
 	*rewardsCoordinator.IRewardsCoordinatorRewardsMerkleClaim,
 	error,
 ) {
-	accountTree, tokenTrees, err := c.distribution.Merklize()
+	accountTree, tokenTrees, err := c.Distribution.Merklize()
 	if err != nil {
 		return nil, nil, err
 	}
 
 	merkleClaim, err := GetProofForEarner(
-		c.distribution,
+		c.Distribution,
 		rootIndex,
 		accountTree,
 		tokenTrees,
